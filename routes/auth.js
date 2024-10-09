@@ -143,21 +143,30 @@ router.put('/update', auth, async (req, res) => {
   }
 });
 
-// Delete User
-router.delete('/delete', async (req, res) => {
-    try {
-      const userId = req.user.id; // Ensure you have middleware to get user from token
-      const user = await User.findByIdAndDelete(userId);
-      if (!user) {
-        return res.status(404).json({ msg: 'User not found' });
-      }
-      res.json({ msg: 'User deleted successfully' });
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      res.status(500).json({ msg: 'Server error' });
+// Delete User Profile
+router.delete('/delete', auth, async (req, res) => {
+  try {
+    console.log('Delete route hit. User:', req.user);
+    if (!req.user || !req.user.id) {
+      return res.status(400).json({ msg: 'User ID not found in token' });
     }
-  });
-  
+
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    await User.findByIdAndDelete(userId);
+
+    res.json({ msg: 'User deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting user:', err);
+    res.status(500).json({ msg: 'Server error', error: err.message });
+  }
+});
+
 // Log all routes
 console.log('Auth routes:', router.stack.map(r => r.route?.path).filter(Boolean));
 

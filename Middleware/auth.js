@@ -1,8 +1,7 @@
 const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
 
 function auth(req, res, next) {
-  const token = req.header('x-auth-token');
+  const token = req.header('x-auth-token') || req.query['x-auth-token'];
   
   if (!token) {
     console.log('No token provided');
@@ -12,9 +11,7 @@ function auth(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log('Decoded token:', decoded);
-    req.user = {
-      id: decoded.user.id // Store the id as a string, we'll convert it to ObjectId when querying
-    };
+    req.user = decoded.user;
     next();
   } catch (e) {
     console.error('Token verification error:', e);
