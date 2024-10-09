@@ -110,30 +110,40 @@ router.get('/profile', auth, async (req, res) => {
   }
 });
 
-// Update User
-router.put('/update', async (req, res) => {
-    const { username, email } = req.body; // You can expand this to include other fields if needed
-  
-    try {
-      const userId = req.user.id; // Ensure you have middleware to get user from token
-      const updatedUser = await User.findByIdAndUpdate(
-        userId,
-        { username, email },
-        { new: true, runValidators: true } // Return the updated user and run validators
-      ).select('-password'); // Exclude password from response
-  
-      if (!updatedUser) {
-        return res.status(404).json({ msg: 'User not found' });
-      }
-      
-      res.json(updatedUser);
-    } catch (error) {
-      console.error('Error updating user:', error);
-      res.status(500).json({ msg: 'Server error' });
-    }
-  });
+// Update User Profile
+router.put('/update', auth, async (req, res) => {
+  const { username, email, password } = req.body;
 
-  // Delete User
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    // Update user fields if provided
+    if (username) user.username = username;
+    if (email) user.email = email;
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
+
+    await user.save();
+
+    // Return updated user without password
+    const updatedUser = user.toObject();
+    delete updatedUser.password;
+
+    res.json({ msg: 'User updated successfully', user: updatedUser });
+  } catch (err) {
+    console.error('Error updating user:', err);
+    res.status(500).json({ msg: 'Server error' });
+  }
+});
+
+// Delete User
 router.delete('/delete', async (req, res) => {
     try {
       const userId = req.user.id; // Ensure you have middleware to get user from token
