@@ -1,8 +1,10 @@
+// /server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
+const musicRoutes = require('./routes/Music');
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -10,6 +12,7 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());  // Enable CORS
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
@@ -28,7 +31,7 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/music', require('./routes/music'));
+app.use('/api/music', musicRoutes);
 app.use('/api/playlists', require('./routes/playlists'));
 app.use('/api/feedback', require('./routes/feedback'));
 
