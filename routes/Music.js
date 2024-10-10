@@ -172,4 +172,38 @@ router.get('/play/:id', auth, async (req, res) => {
   }
 });
 
+// Download music endpoint
+router.get('/download/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid music ID' });
+    }
+
+    const music = await Music.findById(id);
+
+    if (!music) {
+      return res.status(404).json({ message: 'Music track not found' });
+    }
+
+    const audioPath = path.join(__dirname, '..', music.audioFile);
+
+    if (!fs.existsSync(audioPath)) {
+      return res.status(404).json({ message: 'Audio file not found' });
+    }
+
+    const fileName = `${music.artist} - ${music.title}.mp3`;
+
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+
+    const fileStream = fs.createReadStream(audioPath);
+    fileStream.pipe(res);
+  } catch (error) {
+    console.error('Error downloading music:', error);
+    res.status(500).json({ message: 'Error downloading music' });
+  }
+});
+
 module.exports = router;
