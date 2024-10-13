@@ -55,32 +55,36 @@ router.post('/', auth, async (req, res) => {
 
 // Add music to a playlist
 router.put('/:id/music', auth, async (req, res) => {
-  const { musicId } = req.body;
-
-  // Validate request body
-  if (!musicId) {
-    return res.status(400).json({ message: 'Music ID is required' });
-  }
-
-  try {
-    const playlist = await Playlist.findById(req.params.id);
-
-    if (!playlist) {
-      return res.status(404).json({ message: 'Playlist not found' });
+    const { musicIds } = req.body; // Expecting an array of music IDs
+  
+    // Validate request body
+    if (!Array.isArray(musicIds) || musicIds.length === 0) {
+      return res.status(400).json({ message: 'Music IDs are required and must be an array' });
     }
-
-    // Check if music already exists in the playlist
-    if (!playlist.music.includes(musicId)) {
-      playlist.music.push(musicId);
-      await playlist.save();
+  
+    try {
+      const playlist = await Playlist.findById(req.params.id);
+  
+      if (!playlist) {
+        return res.status(404).json({ message: 'Playlist not found' });
+      }
+  
+      // Loop through each music ID and add it if it doesn't already exist
+      musicIds.forEach(musicId => {
+        if (!playlist.music.includes(musicId)) {
+          playlist.music.push(musicId);
+        }
+      });
+  
+      await playlist.save(); // Save changes to the playlist
+  
+      res.json(playlist); // Return the updated playlist
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server Error' });
     }
-
-    res.json(playlist);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server Error' });
-  }
-});
+  });
+  
 
 // Remove music from a playlist
 router.delete('/:id/music/:musicId', auth, async (req, res) => {
