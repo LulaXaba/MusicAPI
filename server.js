@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const musicRoutes = require('./routes/Music');
+const playlistRoutes = require('./routes/Playlist');
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -20,7 +21,10 @@ app.use((req, res, next) => {
 });
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
@@ -32,7 +36,7 @@ app.get('/', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/music', musicRoutes);
-app.use('/api/playlists', require('./routes/playlists'));
+app.use('/api/Playlist', playlistRoutes);
 app.use('/api/feedback', require('./routes/feedback'));
 
 const PORT = process.env.PORT || 3000;
