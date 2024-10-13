@@ -118,4 +118,35 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// Update a playlist (name, description, or music)
+router.put('/:id', auth, async (req, res) => {
+    const { name, description, music } = req.body; // Assume music is an array of music IDs
+  
+    try {
+      const playlist = await Playlist.findById(req.params.id);
+  
+      if (!playlist) {
+        return res.status(404).json({ message: 'Playlist not found' });
+      }
+  
+      // Update the playlist's name and description
+      if (name) playlist.name = name; // Update name if provided
+      if (description) playlist.description = description; // Update description if provided
+  
+      // Handle music tracks
+      if (music) {
+        // Update music tracks: can be adding or resetting the whole array
+        playlist.music = music; // This will overwrite the existing music tracks with new ones
+      }
+  
+      await playlist.save(); // Save changes to the playlist
+  
+      res.json(playlist); // Return the updated playlist
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server Error' });
+    }
+  });
+  
+
 module.exports = router;
