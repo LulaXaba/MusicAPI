@@ -6,7 +6,7 @@ const auth = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const mongoose = require('mongoose');
-const fs = require('fs');
+const fs = require('fs').promises;
 
 // Configure multer
 const storage = multer.diskStorage({
@@ -108,16 +108,30 @@ router.put('/:id', auth, upload.single('audioFile'), async (req, res) => {
 // Delete a music track (protected route)
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const deletedMusic = await Music.findByIdAndDelete(req.params.id);
-    if (!deletedMusic) {
+    const music = await Music.findById(req.params.id);
+    if (!music) {
       return res.status(404).json({ message: 'Music not found' });
     }
+
+    // Delete the audio file from the server if it exists
+    const audioPath = path.join(__dirname, '..', music.audioFile);
+    try {
+      await fs.access(audioPath); // Check if the file exists
+      await fs.unlink(audioPath);
+    } catch (fileErr) {
+      console.error('Audio file not found or unable to delete:', fileErr);
+    }
+
+    // Delete the music document from the database
+    await Music.findByIdAndDelete(req.params.id);
+
     res.json({ message: 'Music deleted successfully' });
   } catch (err) {
-    console.error(err);
+    console.error('Error deleting music:', err);
     res.status(500).json({ message: 'Server Error' });
   }
 });
+
 
 // Play music endpoint
 router.get('/play/:id', auth, async (req, res) => {
