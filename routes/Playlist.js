@@ -115,19 +115,19 @@ router.delete('/:id/music', auth, async (req, res) => {
     }
   });
   
-// Delete a playlist
+// Delete a playlist by ID
 router.delete('/:id', auth, async (req, res) => {
-  try {
-    const playlist = await Playlist.findByIdAndDelete(req.params.id);
-    if (!playlist) {
-      return res.status(404).json({ message: 'Playlist not found' });
+    try {
+      const playlist = await Playlist.findByIdAndDelete(req.params.id);
+      if (!playlist) {
+        return res.status(404).json({ message: 'Playlist not found' });
+      }
+      res.json({ message: 'Playlist deleted successfully' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server Error' });
     }
-    res.json({ message: 'Playlist deleted successfully' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server Error' });
-  }
-});
+  });
 
 // Update a playlist (name, description, or music)
 router.put('/:id', auth, async (req, res) => {
