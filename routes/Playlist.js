@@ -86,28 +86,35 @@ router.put('/:id/music', auth, async (req, res) => {
   });
   
 
-// Remove music from a playlist
-router.delete('/:id/music/:musicId', auth, async (req, res) => {
-  const { id, musicId } = req.params;
-
-  try {
-    const playlist = await Playlist.findById(id);
-
-    if (!playlist) {
-      return res.status(404).json({ message: 'Playlist not found' });
+// Remove multiple music tracks from a playlist
+router.delete('/:id/music', auth, async (req, res) => {
+    const { id } = req.params;
+    const { musicIds } = req.body; // Expecting an array of music IDs
+  
+    // Validate request body
+    if (!Array.isArray(musicIds) || musicIds.length === 0) {
+      return res.status(400).json({ message: 'An array of music IDs is required' });
     }
-
-    // Filter out the music ID to remove
-    playlist.music = playlist.music.filter((id) => id.toString() !== musicId);
-    await playlist.save();
-
-    res.json(playlist);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server Error' });
-  }
-});
-
+  
+    try {
+      // Find the playlist by ID
+      const playlist = await Playlist.findById(id);
+  
+      if (!playlist) {
+        return res.status(404).json({ message: 'Playlist not found' });
+      }
+  
+      // Filter out the music IDs to remove
+      playlist.music = playlist.music.filter(mid => !musicIds.includes(mid.toString()));
+      await playlist.save(); // Save changes to the playlist
+  
+      res.json(playlist); // Return the updated playlist
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server Error' });
+    }
+  });
+  
 // Delete a playlist
 router.delete('/:id', auth, async (req, res) => {
   try {
